@@ -105,7 +105,7 @@ func doMount(ctx context.Context, c *cli.Command) (err error) {
 	options.GID = uint32(os.Getgid())
 	options.FsName = mountpoint
 	options.Name = "gsuitefs"
-	timeout := time.Minute
+	timeout := 10 * time.Second
 	options.EntryTimeout = &timeout
 	server, err := fs.Mount(mountpoint, root, &options)
 	if err != nil {
