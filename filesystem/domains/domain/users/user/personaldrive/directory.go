@@ -26,9 +26,10 @@ type Directory struct {
 	// Leave empty for root
 	trashed   bool
 	directory *drive.File
-	user      *admin.User
-	logger    *slog.Logger
-	config    *config.Config
+
+	user   *admin.User
+	logger *slog.Logger
+	config *config.Config
 }
 
 func NewDirectory(logger *slog.Logger, c *config.Config, user *admin.User, trashed bool, directory *drive.File) (p *Directory) {
@@ -81,6 +82,7 @@ func (d *Directory) Lookup(ctx context.Context, name string, out *fuse.EntryOut)
 			Context(ctx).
 			Corpora("user").
 			PageSize(10).
+			Fields("nextPageToken,files(id,name,fullFileExtension,mimeType,modifiedTime,exportLinks)").
 			Q(fmt.Sprintf("trashed=%t and '%s' in parents and name = '%s'", d.trashed, dirId, name)).
 			OrderBy("name").
 			Do()
@@ -140,7 +142,7 @@ func (d *Directory) Readdir(ctx context.Context) (ds fs.DirStream, errno syscall
 			Corpora("user").
 			PageSize(1_000).
 			Q(fmt.Sprintf("trashed=%t and '%s' in parents", d.trashed, dirId)).
-			Fields("nextPageToken,files(id,name,fullFileExtension,mimeType,modifiedTime)").
+			Fields("nextPageToken,files(id,name,fullFileExtension,mimeType,modifiedTime,exportLinks)").
 			OrderBy("name").
 			Pages(ctx, func(fl *drive.FileList) (err error) {
 				logger.Debug("Retrieving page", "page-length", len(fl.Files))

@@ -29,7 +29,7 @@ func New(logger *slog.Logger, c *config.Config) (r *Root, err error) {
 		logger.Warn("Cache expiration not set", "new-value", c.Cache.Expiration)
 	}
 	if c.Cache.Path == "" {
-		c.Cache.Path, err = os.MkdirTemp("", "*")
+		c.Cache.Path, err = os.MkdirTemp("", "gsuitefs-*")
 		logger.Warn("Cache path not set", "new-value", c.Cache.Path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize cache path: %w", err)
