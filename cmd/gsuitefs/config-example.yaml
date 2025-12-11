@@ -1,0 +1,12 @@
+administrator-subject: administrator@my-domain.com
+service-account-file: /path/to/service/account.json
+include:
+    domains:
+        users:
+            personaldrive:
+              active: true
+              trashed: true
+            sharedfiles: true
+            gmail: true
+        groups: {}
+    shareddrives: true
