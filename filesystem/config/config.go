@@ -9,12 +9,12 @@ import (
 type HttpClientProviderFunc func(ctx context.Context, subject string) (client *http.Client)
 
 type (
-	IncludePersonalDrive struct {
+	IncludeDrive struct {
 		Active  bool
 		Trashed bool
 	}
 	IncludeUsers struct {
-		PersonalDrive *IncludePersonalDrive
+		PersonalDrive *IncludeDrive
 		SharedFiles   bool
 		Gmail         bool
 	}
@@ -25,7 +25,7 @@ type (
 	}
 	Include struct {
 		Domains      *IncludeDomains
-		SharedDrives bool
+		SharedDrives *IncludeDrive
 	}
 	Cache struct {
 		Path       string

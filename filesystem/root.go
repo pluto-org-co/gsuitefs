@@ -55,7 +55,7 @@ func (r *Root) OnAdd(ctx context.Context) {
 	} else {
 		logger.Debug("Ignoring domains")
 	}
-	if r.config.Include.SharedDrives {
+	if r.config.Include.SharedDrives != nil {
 		logger.Debug("Including shared-drives")
 		node := r.NewPersistentInode(ctx, shareddrives.New(r.logger, r.config), fs.StableAttr{Mode: syscall.S_IFDIR})
 		r.AddChild(shareddrives.NodeName, node, false)

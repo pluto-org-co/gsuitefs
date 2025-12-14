@@ -19,7 +19,7 @@ var ExampleCmd = cli.Command{
 			Include: config.Include{
 				Domains: &config.IncludeDomains{
 					Users: &config.IncludeUsers{
-						PersonalDrive: &config.IncludePersonalDrive{
+						PersonalDrive: &config.IncludeDrive{
 							Active:  true,
 							Trashed: true,
 						},
@@ -28,7 +28,10 @@ var ExampleCmd = cli.Command{
 					},
 					Groups: &config.IncludeGroups{},
 				},
-				SharedDrives: true,
+				SharedDrives: &config.IncludeDrive{
+					Active:  true,
+					Trashed: true,
+				},
 			},
 		}
 

@@ -1,4 +1,4 @@
-package personaldrive
+package files
 
 import (
 	"bufio"
@@ -22,7 +22,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-const FileNodeName = "file-node"
+const NodeName = "file-node"
 
 type File struct {
 	fs.Inode
@@ -31,17 +31,28 @@ type File struct {
 	trashed bool
 	file    *drive.File
 	user    *admin.User
+	drive   *drive.Drive
 	logger  *slog.Logger
 	config  *config.Config
 }
 
-func NewFile(logger *slog.Logger, c *config.Config, user *admin.User, trashed bool, file *drive.File) (f *File) {
+type Config struct {
+	Logger  *slog.Logger
+	Config  *config.Config
+	User    *admin.User
+	Drive   *drive.Drive
+	Trashed bool
+	File    *drive.File
+}
+
+func New(cfg *Config) (f *File) {
 	f = &File{
-		logger:  logger.With("inode", FileNodeName, "filename", file.Name),
-		config:  c,
-		user:    user,
-		trashed: trashed,
-		file:    file,
+		logger:  cfg.Logger.With("inode", NodeName, "filename", cfg.File.Name),
+		config:  cfg.Config,
+		user:    cfg.User,
+		drive:   cfg.Drive,
+		trashed: cfg.Trashed,
+		file:    cfg.File,
 	}
 	return f
 }
@@ -75,6 +86,13 @@ func (f *File) fileInfo() (cacheFilename string, modTime, creationTime time.Time
 	return cacheFilename, modTime, creationTime, info.ModTime().Before(modTime), nil
 }
 
+func (f *File) HttpClient(ctx context.Context) (client *http.Client) {
+	if f.drive != nil {
+		return f.config.HttpClientProviderFunc(ctx, f.config.AdministratorSubject)
+	}
+	return f.config.HttpClientProviderFunc(ctx, f.user.PrimaryEmail)
+}
+
 func (f *File) downloadFile(ctx context.Context, logger *slog.Logger) (cacheFilename string, err error) {
 	cacheFilename, modTime, _, cached, err := f.fileInfo()
 	if err != nil {
@@ -88,7 +106,7 @@ func (f *File) downloadFile(ctx context.Context, logger *slog.Logger) (cacheFile
 
 	logger.Debug("Pulling from remote")
 
-	client := f.config.HttpClientProviderFunc(ctx, f.user.PrimaryEmail)
+	client := f.HttpClient(ctx)
 
 	logger.Debug("Preparing drive service")
 	driveSvc, err := drive.NewService(ctx, option.WithHTTPClient(client))
@@ -118,6 +136,9 @@ func (f *File) downloadFile(ctx context.Context, logger *slog.Logger) (cacheFile
 	} else {
 		download, err = driveSvc.Files.
 			Get(f.file.Id).
+			SupportsAllDrives(true).
+			SupportsTeamDrives(true).
+			AcknowledgeAbuse(true).
 			Context(ctx).
 			Download()
 		if err != nil {
