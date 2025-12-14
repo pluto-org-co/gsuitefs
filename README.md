@@ -102,4 +102,4 @@ gsuitefs/
 
 ### 📜 License
 
-This project is licensed under the **Affero General Public License Version 3** (AGPLv3). See the [LICENSE] file for details.
+This project is licensed under the **Affero General Public License Version 3** (AGPLv3). See the [LICENSE](LICENSE) file for details.
