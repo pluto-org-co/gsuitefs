@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"syscall"
+	"time"
 
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
@@ -85,6 +86,7 @@ func New(cfg *Config) (p *Directory) {
 var (
 	_ fs.NodeLookuper  = (*Directory)(nil)
 	_ fs.NodeReaddirer = (*Directory)(nil)
+	_ fs.NodeGetattrer = (*Directory)(nil)
 )
 
 func (d *Directory) HttpClient(ctx context.Context) (client *http.Client) {
@@ -263,4 +265,33 @@ func (d *Directory) Readdir(ctx context.Context) (ds fs.DirStream, errno syscall
 
 	ds = fs.NewListDirStream(dirEntries)
 	return ds, fs.OK
+}
+
+func (d *Directory) fileInfo() (modTime, creationTime time.Time, err error) {
+	now := time.Now()
+	if d.directory == nil {
+		return now, now, nil
+	}
+
+	modTime, err = time.Parse(time.RFC3339, d.directory.ModifiedTime)
+	if err != nil {
+		return modTime, creationTime, fmt.Errorf("failed to parse file modtime: %w", err)
+	}
+
+	creationTime, err = time.Parse(time.RFC3339, d.directory.CreatedTime)
+	if err != nil {
+		return modTime, creationTime, fmt.Errorf("failed to parse file modtime: %w", err)
+	}
+	return modTime, creationTime, nil
+}
+
+func (d *Directory) Getattr(ctx context.Context, fh fs.FileHandle, out *fuse.AttrOut) (errno syscall.Errno) {
+	modTime, creationTime, err := d.fileInfo()
+	if err != nil {
+		return fs.ToErrno(err)
+	}
+
+	out.Ctime = uint64(creationTime.Unix())
+	out.Mtime = uint64(modTime.Unix())
+	return fs.OK
 }
