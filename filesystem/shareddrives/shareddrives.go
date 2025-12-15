@@ -2,6 +2,7 @@ package shareddrives
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"syscall"
@@ -110,9 +111,14 @@ func (s *SharedDrives) Lookup(ctx context.Context, name string, out *fuse.EntryO
 				}
 				return nil
 			})
-		if err != nil && driveEntry == nil {
+		if err != nil && !errors.Is(err, io.EOF) {
 			logger.Error("failed to retrieve shared drive", "error-msg", err)
 			return nil, fs.ToErrno(err)
+		}
+
+		if driveEntry == nil {
+			logger.Error("drive not found")
+			return nil, syscall.ENOENT
 		}
 		logger.Debug("Storing in cache")
 		s.lookupCache.Store(name, driveEntry, s.config.Cache.Expiration)
