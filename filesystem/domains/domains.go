@@ -10,6 +10,7 @@ import (
 	"github.com/pluto-org-co/gsuitefs/cache"
 	"github.com/pluto-org-co/gsuitefs/filesystem/config"
 	"github.com/pluto-org-co/gsuitefs/filesystem/domains/domain"
+	"github.com/pluto-org-co/gsuitefs/filesystem/domains/driveutils"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
 )
@@ -38,6 +39,11 @@ var (
 
 func (d *Domains) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (node *fs.Inode, errno syscall.Errno) {
 	logger := d.logger.With("action", "Lookup", "name", name)
+
+	err := driveutils.IgnoredNames(name)
+	if err != nil {
+		return nil, syscall.ENOENT
+	}
 
 	logger.Debug("Checking cache")
 	domainEntry, found := d.lookupCache.Load(name)

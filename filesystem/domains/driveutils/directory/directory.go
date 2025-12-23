@@ -191,7 +191,12 @@ func (d *Directory) Lookup(ctx context.Context, name string, out *fuse.EntryOut)
 			Trashed:   d.trashed,
 			Directory: file,
 		}
-		node = d.NewInode(ctx, New(&cfg), fs.StableAttr{Mode: syscall.S_IFDIR})
+		newDir := New(&cfg)
+		// var attrOut fuse.AttrOut
+		// newDir.Getattr(ctx, nil, &attrOut)
+		// out.Ctime = attrOut.Ctime
+		// out.Mtime = attrOut.Mtime
+		node = d.NewInode(ctx, newDir, fs.StableAttr{Mode: syscall.S_IFDIR})
 	default:
 		cfg := files.Config{
 			Logger:  d.logger,
@@ -267,9 +272,22 @@ func (d *Directory) Readdir(ctx context.Context) (ds fs.DirStream, errno syscall
 	return ds, fs.OK
 }
 
-func (d *Directory) fileInfo() (modTime, creationTime time.Time, err error) {
+func (d *Directory) directoryInfo() (modTime, creationTime time.Time, err error) {
 	now := time.Now()
 	if d.directory == nil {
+		if d.user != nil {
+			creationTime, err = time.Parse(time.RFC3339, d.user.CreationTime)
+			if err != nil {
+				return creationTime, creationTime, fmt.Errorf("failed to parse user creation time: %w", err)
+			}
+			return creationTime, creationTime, nil
+		} else if d.drive != nil {
+			creationTime, err = time.Parse(time.RFC3339, d.drive.CreatedTime)
+			if err != nil {
+				return creationTime, creationTime, fmt.Errorf("failed to parse drive creation time: %w", err)
+			}
+			return creationTime, creationTime, nil
+		}
 		return now, now, nil
 	}
 
@@ -286,7 +304,7 @@ func (d *Directory) fileInfo() (modTime, creationTime time.Time, err error) {
 }
 
 func (d *Directory) Getattr(ctx context.Context, fh fs.FileHandle, out *fuse.AttrOut) (errno syscall.Errno) {
-	modTime, creationTime, err := d.fileInfo()
+	modTime, creationTime, err := d.directoryInfo()
 	if err != nil {
 		return fs.ToErrno(err)
 	}

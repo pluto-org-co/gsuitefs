@@ -105,8 +105,10 @@ func doMount(ctx context.Context, c *cli.Command) (err error) {
 	options.GID = uint32(os.Getgid())
 	options.FsName = mountpoint
 	options.Name = "gsuitefs"
-	timeout := 10 * time.Second
+	timeout := time.Minute
 	options.EntryTimeout = &timeout
+	// options.AttrTimeout = &timeout
+	options.NegativeTimeout = &timeout
 	server, err := fs.Mount(mountpoint, root, &options)
 	if err != nil {
 		return fmt.Errorf("failed to mount filesystem: %w", err)
