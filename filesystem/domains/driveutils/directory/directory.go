@@ -22,13 +22,12 @@ import (
 const NodeName = "dir-node"
 
 type Config struct {
-	Logger       *slog.Logger
-	Config       *config.Config
-	User         *admin.User
-	Drive        *drive.Drive
-	Trashed      bool
-	SharedWithMe bool
-	Directory    *drive.File
+	Logger    *slog.Logger
+	Config    *config.Config
+	User      *admin.User
+	Drive     *drive.Drive
+	Trashed   bool
+	Directory *drive.File
 }
 
 const ReaddirCacheKey = 0
@@ -40,9 +39,8 @@ type Directory struct {
 	readdirCache cache.Cache[int, []fuse.DirEntry]
 
 	// Leave empty for root
-	trashed      bool
-	sharedWithMe bool
-	directory    *drive.File
+	trashed   bool
+	directory *drive.File
 
 	drive  *drive.Drive
 	user   *admin.User
@@ -76,13 +74,12 @@ func New(cfg *Config) (p *Directory) {
 	}
 
 	return &Directory{
-		logger:       logger,
-		config:       cfg.Config,
-		user:         cfg.User,
-		drive:        cfg.Drive,
-		trashed:      cfg.Trashed,
-		sharedWithMe: cfg.SharedWithMe,
-		directory:    cfg.Directory,
+		logger:    logger,
+		config:    cfg.Config,
+		user:      cfg.User,
+		drive:     cfg.Drive,
+		trashed:   cfg.Trashed,
+		directory: cfg.Directory,
 	}
 }
 
@@ -115,9 +112,9 @@ func (d *Directory) ListCall(svc *drive.Service, name string) (call *drive.Files
 			Fields("nextPageToken,files(id,name,fullFileExtension,mimeType,size,modifiedTime,createdTime,exportLinks)").
 			OrderBy("name")
 		if name == "" {
-			return call.Q(fmt.Sprintf("trashed=%t and sharedWithMe=%t and '%s' in parents", d.trashed, d.sharedWithMe, dirId)), nil
+			return call.Q(fmt.Sprintf("trashed=%t and '%s' in parents", d.trashed, dirId)), nil
 		}
-		return call.Q(fmt.Sprintf("trashed=%t and sharedWithMe=%t and '%s' in parents and name = '%s'", d.trashed, d.sharedWithMe, dirId, name)), nil
+		return call.Q(fmt.Sprintf("trashed=%t and '%s' in parents and name = '%s'", d.trashed, dirId, name)), nil
 	case d.drive != nil:
 		var dirId string
 		if d.directory == nil {
@@ -187,13 +184,12 @@ func (d *Directory) Lookup(ctx context.Context, name string, out *fuse.EntryOut)
 	switch file.MimeType {
 	case "application/vnd.google-apps.folder":
 		cfg := Config{
-			Logger:       d.logger,
-			Config:       d.config,
-			User:         d.user,
-			Drive:        d.drive,
-			Trashed:      d.trashed,
-			SharedWithMe: d.sharedWithMe,
-			Directory:    file,
+			Logger:    d.logger,
+			Config:    d.config,
+			User:      d.user,
+			Drive:     d.drive,
+			Trashed:   d.trashed,
+			Directory: file,
 		}
 		node = d.NewInode(ctx, New(&cfg), fs.StableAttr{Mode: syscall.S_IFDIR})
 	default:

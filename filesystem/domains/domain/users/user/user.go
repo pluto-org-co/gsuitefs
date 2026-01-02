@@ -8,7 +8,6 @@ import (
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/pluto-org-co/gsuitefs/filesystem/config"
 	"github.com/pluto-org-co/gsuitefs/filesystem/domains/domain/users/user/personaldrive"
-	"github.com/pluto-org-co/gsuitefs/filesystem/domains/domain/users/user/sharedfiles"
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
@@ -37,13 +36,8 @@ func (u *User) OnAdd(ctx context.Context) {
 		node := u.NewPersistentInode(ctx, personaldrive.New(u.logger, u.config, u.user), fs.StableAttr{Mode: syscall.S_IFDIR})
 		u.AddChild(personaldrive.NodeName, node, false)
 	} else {
-	}
-	if u.config.Include.Domains.Users.SharedFiles {
-		logger.Debug("Including shared files with user")
-		node := u.NewPersistentInode(ctx, sharedfiles.New(u.logger, u.config, u.user), fs.StableAttr{Mode: syscall.S_IFDIR})
-		u.AddChild(sharedfiles.NodeName, node, false)
-	} else {
 		logger.Debug("Ignoring personal drive")
 	}
+	// TODO: Shared drives
 	// TODO: Gmail
 }
